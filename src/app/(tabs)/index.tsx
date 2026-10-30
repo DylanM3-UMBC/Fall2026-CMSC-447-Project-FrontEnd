@@ -1,6 +1,8 @@
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Image, ImageStyle, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useWindowDimensions, View, ViewStyle } from 'react-native';
+import { Alert, FlatList, Image, ImageStyle, Platform, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { EmptyPlaceholder, FileCard, PickerWrapper, UploadedFile } from '../../components/pdfprojectItemComponent';
 
 interface DashboardStyles {
@@ -45,17 +47,15 @@ interface DashboardStyles {
 }
 
 const SIDEBAR_DATA = [
-  { title: 'Academics', icon: '🎓' },
-  { title: 'Campus Life', icon: '🛡️' },
-  { title: 'Classifieds', icon: '📢' },
-  { title: 'Current Events', icon: '📅' },
-  { title: 'Current Events', icon: '📅' },
-  { title: 'Current Events', icon: '📅' },
-  { title: 'Current Events', icon: '📅' },
+  { title: 'UMBC Campus', icon: '🎓' },
+  { title: 'Security', icon: '🛡️' },
+  { title: 'Alerts', icon: '📢' },
+  { title: 'Events', icon: '📅' },
 ];
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('Your Projects');
+  const router = useRouter();
   // 1. All hook dependencies execute unconditionally at the top level
   const { width } = useWindowDimensions(); 
   const [hasHydrated, setHasHydrated] = useState<boolean>(false);
@@ -113,12 +113,25 @@ export default function Index() {
       setProfileImage(result.assets[0].uri);
     }
   }
-  const showImagePicker = () => {
-    Alert.alert("Select Profile Image", "Choose an option",[
-      {text: "Camera", onPress: takePhoto },
-      {text: "Photo Library", onPress: pickImage},
-      {text: "Cancel", style: "cancel"}
-    ]);
+  const showImagePicker = async () => {
+    if (Platform.OS === 'web') {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*', // Limit selection to images only
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+       setProfileImage(result.assets[0].uri);
+      }
+      return;
+    }
+    if (Platform.OS === 'android' || Platform.OS === "ios"){
+      Alert.alert("Select Profile Image", "Choose an option",[
+        {text: "Camera", onPress: takePhoto },
+        {text: "Photo Library", onPress: pickImage},
+        {text: "Cancel", style: "cancel"}
+      ]);
+    }
   }
 
   return (
@@ -232,7 +245,7 @@ export default function Index() {
                   {/* FIRST MODULE: Upper Task Summary Groups */}
                   <View style={styles.sidebarContainer}>
                     <Text style={styles.sectionTitle}>Task Summary Reports</Text>
-                    <TouchableOpacity style={styles.TaskSummaryButton} onPress={showImagePicker}>
+                    <TouchableOpacity style={styles.TaskSummaryButton} onPress={() => router.push("/my_task_summary")}>
                         <Text style={styles.TaskSummaryText}>0 Reports</Text>
                     </TouchableOpacity>
                     
@@ -484,7 +497,7 @@ const createStyles = (width: number): DashboardStyles => {
       zIndex: 10,
     },
     profileImage: {
-      right: -95,
+      right: 0,
       width: 120,
       height: 120,
       borderRadius: 60,
