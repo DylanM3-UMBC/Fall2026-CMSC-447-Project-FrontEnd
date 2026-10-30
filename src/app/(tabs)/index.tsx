@@ -1,5 +1,6 @@
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from 'react';
-import { FlatList, Image, ImageStyle, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useWindowDimensions, View, ViewStyle } from 'react-native';
+import { Alert, FlatList, Image, ImageStyle, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { EmptyPlaceholder, FileCard, PickerWrapper, UploadedFile } from '../../components/pdfprojectItemComponent';
 
 interface DashboardStyles {
@@ -12,13 +13,14 @@ interface DashboardStyles {
   scrollContent: ViewStyle;
   centerLayoutWrapper: ViewStyle;
   heroSection: ViewStyle;
-  dateText: TextStyle;
+  profileName: TextStyle;
   gridRow: ViewStyle;
-  leftCommunityColumn: ViewStyle;
+  leftProjectColumn: ViewStyle;
   rightGroupsColumn: ViewStyle;
   sidebarContainer: ViewStyle;
   sectionTitle: TextStyle;
   groupCardItem: ViewStyle;
+  TaskSummaryText: TextStyle
   groupCardText: TextStyle;
   profileBannerImage: ImageStyle
   scrollBoxWrapper: ViewStyle
@@ -27,9 +29,17 @@ interface DashboardStyles {
   activeTabButton: ViewStyle
   tabText: TextStyle
   activeTabText: TextStyle
-  placeholderText: TextStyle
+  placeholderText_Project: TextStyle
   createProjectButton: ViewStyle;
   createProjectText: TextStyle;
+
+  imageContainer: ViewStyle;
+  profileImage: ImageStyle;      // Uses ImageStyle because it targets the actual user photo
+  placeholderImage: ViewStyle;    // Uses ViewStyle because it acts as the dashed container box
+  placeholderText: TextStyle;
+  editBadge: ViewStyle;
+  editText: TextStyle;
+
 }
 
 const SIDEBAR_DATA = [
@@ -47,6 +57,8 @@ export default function Index() {
   // 1. All hook dependencies execute unconditionally at the top level
   const { width } = useWindowDimensions(); 
   const [hasHydrated, setHasHydrated] = useState<boolean>(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
 
   useEffect(() => {
     setHasHydrated(true);
@@ -64,6 +76,48 @@ export default function Index() {
     size: f.size,
     uploadedAt: new Date().toLocaleTimeString(),
   }]);
+
+
+
+  
+  const pickImage = async () => {
+    const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "We need camera roll permissions to select a profile image.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1,1],
+      quality: 0.8,
+    })
+    if (!result.canceled && result.assets[0]) {
+      setProfileImage(result.assets[0].uri);
+    }
+  }
+  const takePhoto = async () => {
+    const {status} = await ImagePicker.requestCameraPermissionsAsync()
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "We need camera permissions to take a photo.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1,1],
+      quality: 0.8,
+    })
+    if (!result.canceled && result.assets[0]) {
+      setProfileImage(result.assets[0].uri);
+    }
+  }
+  const showImagePicker = () => {
+    Alert.alert("Select Profile Image", "Choose an option",[
+      {text: "Camera", onPress: takePhoto },
+      {text: "Photo Library", onPress: pickImage},
+      {text: "Cancel", style: "cancel"}
+    ]);
+  }
 
   return (
     <View style={styles.screenContainer}>
@@ -93,14 +147,27 @@ export default function Index() {
               {/* UPPER ZONE: Events & Dates */}
               <View style={styles.heroSection}>
                 <Image source={require("../../assets/images/umbc_day_sign.png")} style={styles.profileBannerImage}/>
-                <Text style={styles.dateText}>FRIDAY, OCTOBER 30, 2026</Text>
+
+                <TouchableOpacity style={styles.imageContainer} onPress={showImagePicker}>
+                  {profileImage ? (<Image source={{uri: profileImage}} style={styles.profileImage} />) : ( 
+                      <View style={styles.placeholderImage}>
+                          <Text style={styles.placeholderText}>+</Text>
+                      </View>
+                  )} 
+                  
+                  <View style={styles.editBadge}>
+                      <Text style={styles.editText}>Edit</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={styles.profileName}>Your Fullname</Text>
               </View>
 
               {/* LOWER ZONE: 2-Column Side-by-Side Content Grid */}
               <View style={styles.gridRow}>
                 
-                {/* LOWER LEFT: Community Feed Section */}
-                <View style={styles.leftCommunityColumn}>
+                {/* LOWER LEFT: Project Feed Section */}
+                <View style={styles.leftProjectColumn}>
                   <Text style={styles.sectionTitle}>Projects</Text>
 
                   <PickerWrapper onFilePicked={addFile}>
@@ -149,19 +216,21 @@ export default function Index() {
                     />
                   ) : (
                     /* Render your shared projects list view here */
-                    <Text style={styles.placeholderText}>No Shared Projects...</Text>
+                    <Text style={styles.placeholderText_Project}>No Shared Projects...</Text>
                   )}  
                 </View>
 
                 {/* LOWER RIGHT: Sidebar Layout */}
                 <View style={styles.rightGroupsColumn}>
                   
-                  {/* FIRST MODULE: Upper Discussion Groups */}
+                  {/* FIRST MODULE: Upper Task Summary Groups */}
                   <View style={styles.sidebarContainer}>
                     <Text style={styles.sectionTitle}>Task Summary Reports</Text>
+                    <Text style={styles.TaskSummaryText}> 0 Reports</Text>
+                    
                   </View>
 
-                  {/* SECOND MODULE: Duplicated Discussion Groups underneath */}
+                  {/* SECOND MODULE: Comments Groups underneath */}
                   <View style={styles.sidebarContainer}>
                     <Text style={styles.sectionTitle}>Comments</Text>
                     
@@ -262,18 +331,19 @@ const createStyles = (width: number): DashboardStyles => {
     },
 
 
-    dateText: {
-      fontSize: 14,
+    profileName: {
+      fontSize: 30,
       fontWeight: 'bold',
-      color: '#007BFF', 
-      marginBottom: 8,
+      color: '#000', 
+      marginBottom: 0,
+      marginLeft: 140,
     },
     gridRow: {
       width: '100%',
       flexDirection: 'row', 
       paddingHorizontal: 15,
     },
-    leftCommunityColumn: {
+    leftProjectColumn: {
       flex: 7.2, 
       paddingRight: 24,
       borderWidth: 0,
@@ -295,6 +365,14 @@ const createStyles = (width: number): DashboardStyles => {
       borderBottomColor: '#E0E0E0',
       paddingBottom: 8,
     },
+
+    TaskSummaryText: {
+      fontSize: 14,
+      color: '#ff0000',
+      fontWeight: '500',
+      alignSelf: 'center',
+    },
+
     groupCardItem: {
       width: '100%',
       paddingVertical: 12,
@@ -302,8 +380,8 @@ const createStyles = (width: number): DashboardStyles => {
       backgroundColor: '#F9F9F9',
       borderRadius: 6,
       marginBottom: 8,
-      borderWidth: 0,
-      borderColor: '#EAEAEA',
+      borderWidth: 1,
+      borderColor: "#000", //'#EAEAEA'
     },
     groupCardText: {
       fontSize: 14,
@@ -338,7 +416,7 @@ const createStyles = (width: number): DashboardStyles => {
     activeTabText: {
       color: '#000000', // Bold black text for active state
     },
-    placeholderText: {
+    placeholderText_Project: {
       flex: 1,
       margin: "26%",
       alignItems: 'center',
@@ -372,6 +450,53 @@ const createStyles = (width: number): DashboardStyles => {
       fontSize: 14,
       fontWeight: '600',
       color: '#10B981',             
+    },
+
+
+    imageContainer: {
+      marginBottom: 32,
+      position: "absolute",
+      bottom: -30,
+      left: 10,
+      zIndex: 10,
+    },
+    profileImage: {
+      right: -95,
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: "#f5f5f5",
+    },
+    placeholderImage: {
+      right: 0,
+      width: 120,
+      height: 120,
+      backgroundColor: "#f5f5f5",
+      borderRadius: 60,
+      justifyContent: "center",
+      alignItems: "center",
+      position: "relative",
+      borderWidth: 2,
+      borderColor: "#e0e0e0",
+      borderStyle: "solid"
+    },
+    placeholderText: {
+      fontSize: 48,
+      color: "#999",
+    },
+    editBadge: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      backgroundColor: "#000",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    editText: {
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: "600",
     },
   });
 };
