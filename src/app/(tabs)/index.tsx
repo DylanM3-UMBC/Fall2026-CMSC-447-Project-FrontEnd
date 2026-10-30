@@ -18,8 +18,10 @@ interface DashboardStyles {
   leftProjectColumn: ViewStyle;
   rightGroupsColumn: ViewStyle;
   sidebarContainer: ViewStyle;
+  sectionTitleProjects: TextStyle
   sectionTitle: TextStyle;
   groupCardItem: ViewStyle;
+  TaskSummaryButton: ViewStyle
   TaskSummaryText: TextStyle
   groupCardText: TextStyle;
   profileBannerImage: ImageStyle
@@ -168,7 +170,9 @@ export default function Index() {
                 
                 {/* LOWER LEFT: Project Feed Section */}
                 <View style={styles.leftProjectColumn}>
-                  <Text style={styles.sectionTitle}>Projects</Text>
+
+                  <Text style={styles.sectionTitleProjects}>Projects</Text>
+
 
                   <PickerWrapper onFilePicked={addFile}>
                     {(openPicker) => (
@@ -220,13 +224,17 @@ export default function Index() {
                   )}  
                 </View>
 
+                
+
                 {/* LOWER RIGHT: Sidebar Layout */}
                 <View style={styles.rightGroupsColumn}>
                   
                   {/* FIRST MODULE: Upper Task Summary Groups */}
                   <View style={styles.sidebarContainer}>
                     <Text style={styles.sectionTitle}>Task Summary Reports</Text>
-                    <Text style={styles.TaskSummaryText}> 0 Reports</Text>
+                    <TouchableOpacity style={styles.TaskSummaryButton} onPress={showImagePicker}>
+                        <Text style={styles.TaskSummaryText}>0 Reports</Text>
+                    </TouchableOpacity>
                     
                   </View>
 
@@ -356,6 +364,18 @@ const createStyles = (width: number): DashboardStyles => {
       width: '100%',
       marginBottom: 32, // Spacing gap separating the top widget block from the bottom widget block
     },
+
+    sectionTitleProjects: {
+      fontSize: 30,
+      top: -12.2,
+      fontWeight: 'bold',
+      color: '#333',
+      marginBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E0E0E0',
+      paddingBottom: 8,
+    },
+    
     sectionTitle: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -366,11 +386,14 @@ const createStyles = (width: number): DashboardStyles => {
       paddingBottom: 8,
     },
 
+    TaskSummaryButton: {
+      alignSelf: 'center',       
+    },
     TaskSummaryText: {
       fontSize: 14,
       color: '#ff0000',
       fontWeight: '500',
-      alignSelf: 'center',
+      
     },
 
     groupCardItem: {
@@ -441,7 +464,7 @@ const createStyles = (width: number): DashboardStyles => {
       paddingHorizontal: 20,
       paddingVertical: 6,
       marginBottom: 2,
-      marginTop: -60,
+      marginTop: -10,
       borderRadius: 6,
       borderColor: "#10B981",
       borderWidth: 3,           
